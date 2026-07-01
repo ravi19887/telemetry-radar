@@ -14,7 +14,7 @@ jobs:
         java-version: '17'
         distribution: 'zulu'
 
-    # 1. This step creates the dummy environment files and the google-services template
+    # We update the package_name here to match what your app expects!
     - name: Create Missing Environment Dotfiles & Firebase Placeholders
       run: |
         touch .env.example
@@ -22,11 +22,9 @@ jobs:
         echo "API_KEY=mock_key_for_compilation" > .env.example
         echo "API_KEY=mock_key_for_compilation" > .env
         
-        # Creating a basic dummy google-services.json so the plugin passes cleanly
         mkdir -p app/
-        echo '{"project_info":{"project_number":"123456789","project_id":"mock-id","storage_bucket":"mock.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:123:android:123","android_client_info":{"package_name":"com.spatial.hud.navigator"}},"api_key":[{"current_key":"mock_key"}],"services":{}}],"configuration_version":"1"}' > app/google-services.json
+        echo '{"project_info":{"project_number":"123456789","project_id":"mock-id","storage_bucket":"mock.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:123:android:123","android_client_info":{"package_name":"com.aistudio.telemetryradar.xdpqvf"}},"api_key":[{"current_key":"mock_key"}],"services":{}}],"configuration_version":"1"}' > app/google-services.json
 
-    # 2. This step automatically generates the missing debug signature keystore
     - name: Generate Missing Debug Keystore
       run: |
         keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Debug"
@@ -34,6 +32,7 @@ jobs:
     - name: Setup Gradle Build Environment
       uses: gradle/actions/setup-gradle@v4
 
+    # We match the injected applicationId to the exact one verified by the log
     - name: Find Project and Compile APK
       run: |
         GRADLE_PROJECT_DIR=$(find . -name "build.gradle*" -not -path "*/app/*" | head -n 1)
@@ -44,7 +43,7 @@ jobs:
         fi
         
         cd "$BUILD_DIR"
-        gradle assembleDebug -Pandroid.injected.applicationId=com.spatial.hud.navigator
+        gradle assembleDebug -Pandroid.injected.applicationId=com.aistudio.telemetryradar.xdpqvf
 
     - name: Upload Spatial HUD APK
       uses: actions/upload-artifact@v4
