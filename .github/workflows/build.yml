@@ -5,7 +5,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    # 1. This step grabs YOUR custom code that you uploaded above
     - name: Checkout Repository Code
       uses: actions/checkout@v4
 
@@ -15,15 +14,29 @@ jobs:
         java-version: '17'
         distribution: 'zulu'
 
-    - name: Grant Execute Permissions
-      run: chmod +x gradlew
+    # Instead of relying on a missing gradlew file, we install Gradle directly onto the runner!
+    - name: Setup Gradle Build Environment
+      uses: gradle/actions/setup-gradle@v4
 
-    - name: Compile APK
+    - name: Find Project and Compile APK
       run: |
-        ./gradlew assembleDebug -Pandroid.injected.applicationId=com.spatial.hud.navigator
+        # Locate where build.gradle or build.gradle.kts lives in your uploaded zip files
+        GRADLE_PROJECT_DIR=$(find . -name "build.gradle*" -not -path "*/app/*" | head -n 1)
+        if [ -z "$GRADLE_PROJECT_DIR" ]; then
+          # Fallback if it only finds the app-level file
+          BUILD_DIR="."
+        else
+          BUILD_DIR=$(dirname "$GRADLE_PROJECT_DIR")
+        fi
+        
+        cd "$BUILD_DIR"
+        # Run compilation using the cloud-installed global gradle command
+        gradle assembleDebug -Pandroid.injected.applicationId=com.spatial.hud.navigator
 
     - name: Upload Spatial HUD APK
       uses: actions/upload-artifact@v4
       with:
         name: Spatial-HUD-Navigator
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: |
+          **/build/outputs/apk/debug/app-debug.apk
+          **/build/outputs/apk/debug/*-debug.apk
