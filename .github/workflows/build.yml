@@ -14,23 +14,27 @@ jobs:
         java-version: '17'
         distribution: 'zulu'
 
-    # Instead of relying on a missing gradlew file, we install Gradle directly onto the runner!
+    # This creates the dummy dotfiles that the build script is looking for
+    - name: Create Missing Environment Dotfiles
+      run: |
+        touch .env.example
+        touch .env
+        echo "API_KEY=mock_key_for_compilation" > .env.example
+        echo "API_KEY=mock_key_for_compilation" > .env
+
     - name: Setup Gradle Build Environment
       uses: gradle/actions/setup-gradle@v4
 
     - name: Find Project and Compile APK
       run: |
-        # Locate where build.gradle or build.gradle.kts lives in your uploaded zip files
         GRADLE_PROJECT_DIR=$(find . -name "build.gradle*" -not -path "*/app/*" | head -n 1)
         if [ -z "$GRADLE_PROJECT_DIR" ]; then
-          # Fallback if it only finds the app-level file
           BUILD_DIR="."
         else
           BUILD_DIR=$(dirname "$GRADLE_PROJECT_DIR")
         fi
         
         cd "$BUILD_DIR"
-        # Run compilation using the cloud-installed global gradle command
         gradle assembleDebug -Pandroid.injected.applicationId=com.spatial.hud.navigator
 
     - name: Upload Spatial HUD APK
