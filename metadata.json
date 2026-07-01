@@ -1,0 +1,6 @@
+{
+  "name": "Telemetry Radar",
+  "description": "LiteRT Object Detection & Cyberpunk Spatial Telemetry Dashboard via CameraX",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
