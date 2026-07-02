@@ -85,52 +85,19 @@ class TelemetryViewModel : ViewModel() {
         }
     }
 
-    fun initModelAndDetector(context: Context) {
+   fun initModelAndDetector(context: Context) {
         if (_modelLoadState.value is ModelLoadState.Success) return
 
         viewModelScope.launch {
-            _modelLoadState.value = ModelLoadState.Downloading(0)
-            log("SYSTEM: RESOLVING TELEMETRY MODEL...")
-            
-            val modelFile = File(context.filesDir, "efficientdet_lite0.tflite")
-            val isCached = modelFile.exists() && modelFile.length() > 1000000
-            
-            if (isCached) {
-                log("SYSTEM: RETRIEVING CACHED MODEL...")
-                _modelLoadState.value = ModelLoadState.Downloading(100)
-            } else {
-                log("SYSTEM: COCO-80 NETWORK TARGET LOADED")
-                try {
-                    downloadModel(
-                        context,
-                        "https://storage.googleapis.com/download.tensorflow.org/models/tflite/task_library/object_detector/android/lite-model_efficientdet_lite0_detection_metadata_1.tflite"
-                    ) { progress ->
-                        _modelLoadState.value = ModelLoadState.Downloading(progress)
-                        if (progress % 20 == 0 || progress == 100) {
-                            log("SYSTEM: MODEL FETCHING... $progress%")
-                        }
-                    }
-                } catch (e: Exception) {
-                    log("SYSTEM_ERR: REMOTE HOST UNREACHABLE")
-                    log("SYSTEM_ERR: FALLING BACK TO SYNTHETIC GENERATOR")
-                    _modelLoadState.value = ModelLoadState.Error("Download failed: ${e.message}")
-                    return@launch
-                }
-            }
-
             _modelLoadState.value = ModelLoadState.LoadingDetector
-            log("SYSTEM: INSTANTIATING LiteRT COMPILER...")
+            log("SYSTEM: RESOLVING TELEMETRY MODEL...")
+            log("SYSTEM: LOADING LOCAL ASSET...")
 
             try {
                 withContext(Dispatchers.Default) {
-                    val modelFile = File(context.filesDir, "efficientdet_lite0.tflite")
-                    val fileInputStream = FileInputStream(modelFile)
-                    val fileChannel = fileInputStream.channel
-                    val byteBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size())
-                    fileInputStream.close()
-
+                    // Read the model directly from the app assets instead of disk/network
                     val baseOptions = BaseOptions.builder()
-                        .setModelAssetBuffer(byteBuffer)
+                        .setModelAssetPath("efficientdet_lite0.tflite")
                         .build()
                     val options = ObjectDetectorOptions.builder()
                         .setBaseOptions(baseOptions)
